@@ -1,105 +1,25 @@
 import React, { Component } from 'react';
+import Particles from 'react-particles-js';
+import Clarifai from 'clarifai';
 import Navigation from './components/Navigation/Navigation';
+import FaceRecognition from './components/FaceRecognition/FaceRecognition';
 import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
-import Particles from 'react-particles-js';
 import './App.css';
 
+const app = new Clarifai.App({
+  apiKey: 'c3029c1637084dfaa5452d0f092c81d5'
+})
 
 // test ssh
 const particlesOptions = {
   "particles": {
     "number": {
-            "value": 204,
+            "value": 30,
             "density": {
               "enable": true,
-              "value_area": 1736.124811591
-            }
-          },
-          "color": {
-            "value": "#ffffff"
-          },
-          "shape": {
-            "type": "circle",
-            "stroke": {
-              "width": 0,
-              "color": "#000000"
-            },
-            "polygon": {
-              "nb_sides": 5
-            },
-            "image": {
-              "src": "img/github.svg",
-              "width": 100,
-              "height": 100
-            }
-          },
-          "opacity": {
-            "value": 0.5,
-            "random": false,
-            "anim": {
-              "enable": false,
-              "speed": 1,
-              "opacity_min": 0.1,
-              "sync": false
-            }
-          },
-          "size": {
-            "value": 3,
-            "random": true,
-            "anim": {
-              "enable": false,
-              "speed": 3,
-              "size_min": 0.1,
-              "sync": false
-            }
-          },
-          "line_linked": {
-            "enable": true,
-            "distance": 150,
-            "color": "#ffffff",
-            "opacity": 0.4,
-            "width": 1
-          },
-          "move": {
-            "enable": true,
-            "speed": 0.5,
-            "direction": "none",
-            "random": false,
-            "straight": false,
-            "out_mode": "out",
-            "bounce": false,
-            "attract": {
-              "enable": false,
-              "rotateX": 600,
-              "rotateY": 1200
-            }
-          }
-        },
-        "interactivity": {
-          "detect_on": "canvas",
-          "events": {
-            "onhover": {
-              "enable": true,
-              "mode": "repulse"
-            },
-            "onclick": {
-              "enable": true,
-              "mode": "push"
-            },
-            "resize": true
-          },
-          "modes": {
-            "repulse": {
-              "distance": 200,
-              "duration": 3
-            },
-            "push": {
-              "particles_nb": 4
-            },
-            "remove": {
-              "particles_nb": 2
+              "value_area": 800
             }
           }
         },
@@ -110,15 +30,28 @@ class App extends Component {
     super()
     this.state = {
       input: '',
+      imageUrl: ''
     }
   }
 
   onInputChange = (e) => {
-    console.log(e.target.value)
+    this.setState({input: e.target.value})
   }
 
   onButtonSubmit = () => {
-    console.log('submit')
+    this.setState({imageUrl: this.state.input});
+    // this seems to only work with provided sample key: a403429f2ddf4b49b307e318f00e528b
+    app.models.predict(
+      Clarifai.FACE_DETECT_MODEL, 
+      this.state.input)
+    .then(
+      function(response) {
+        console.log(response);
+      },
+      function(err) {
+        //
+      }
+    );
   }
 
   render() {
@@ -131,6 +64,7 @@ class App extends Component {
         <ImageLinkForm 
           onInputChange={this.onInputChange} 
           onSubmit={this.onButtonSubmit}/>
+          <FaceRecognition imageUrl={this.state.imageUrl} />
       </div>
     )
   }

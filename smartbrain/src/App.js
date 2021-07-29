@@ -3,6 +3,7 @@ import Particles from 'react-particles-js';
 import Clarifai from 'clarifai';
 import Navigation from './components/Navigation/Navigation';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
+import Signin from './components/Signin/Signin';
 import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
@@ -80,6 +81,7 @@ class App extends Component {
       <div className="App">
         <Particles className="particles" parms={particlesOptions}/>
         <Navigation />
+        <Signin />
         <Logo />
         <Rank />
         <ImageLinkForm 

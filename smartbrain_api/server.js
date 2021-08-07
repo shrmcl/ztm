@@ -6,17 +6,21 @@ const cors = require('cors')
 // SQL querying package:
 const knex = require('knex')
 
-const postgres = knex({
+const db = knex({
   // 'pg' is the installed postgres package
   client: 'pg',
   connection: {
     host: '127.0.0.1', // same as localhost
-    database: 'smartbrain'
+    database: 'smartbrain',
   },
-});
+})
 
-// test knex connection
-console.log(postgres.select('*').from('users'));
+// knex query builder
+db.select('*')
+  .from('users')
+  .then((data) => {
+    // console.log(data);
+  })
 
 // json parser for 'x-www-form-urlencoded' (postman)
 app.use(express.urlencoded({extended: true}))
@@ -25,28 +29,6 @@ app.use(express.json())
 app.use(cors())
 // port
 const port = process.env.PORT || 3000
-
-// fake database data
-const database = {
-  users: [
-    {
-      id: '123',
-      name: 'Jonn',
-      email: 'john@john.io',
-      password: 'cookies',
-      entries: 0,
-      joined: new Date(),
-    },
-    {
-      id: '124',
-      name: 'Sally',
-      email: 'sally@sally.io',
-      password: 'bananas',
-      entries: 0,
-      joined: new Date(),
-    },
-  ],
-}
 
 // root route
 app.get('/', (req, res) => {
@@ -79,39 +61,34 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
   const {email, name, password} = req.body
-  // pw encryption w/ 'bcrypt-nodejs' package
-  bcrypt.hash(password, null, null, function (err, hash) {
-    console.log(hash)
-  })
-  // push new user to temp databse
-  database.users.push({
-    id: '125',
-    name: name,
-    email: email,
-    entries: 0,
-    joined: new Date(),
-  })
-  console.log(req.body)
-  // send latest user as a json response
-  res.json(database.users[database.users.length - 1])
+  // send all registered user details to db
+  db('users')
+    .returning('*')
+    .insert({
+      email: email,
+      name: name,
+      joined: new Date(),
+    })
+    .then((user) => {
+      res.json(user[0])
+    })
+    .catch((err) => res.status(400).json('unable to register'))
 })
 
 // find a logged-in user with their id
 app.get('/profile/:id', (req, res) => {
   const {id} = req.params
-  // set variable to see if user can be found. default false.
-  let found = false
-  database.users.forEach((user) => {
-    if (user.id === id) {
-      // when user is found, set found to true
-      found = true
-      return res.json(user)
-    }
-  })
-  // status to send if user not found
-  if (!found) {
-    res.status(400).json('not found')
-  }
+  // find the id in the db
+  db.select('*').from('users').where({id})
+    .then(user => {
+      if (user.length) {
+        // respond with user info
+        res.json(user[0])
+      } else {
+        res.status(400).json('Not found')
+      }
+    })
+    .catch(err => res.status(400).json('error getting user'))
 })
 
 app.put('/image', (req, res) => {

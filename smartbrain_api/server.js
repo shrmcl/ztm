@@ -3,6 +3,21 @@ const app = express()
 // password encryption
 const bcrypt = require('bcrypt-nodejs')
 const cors = require('cors')
+// SQL querying package:
+const knex = require('knex')
+
+const postgres = knex({
+  // 'pg' is the installed postgres package
+  client: 'pg',
+  connection: {
+    host: '127.0.0.1', // same as localhost
+    database: 'smartbrain'
+  },
+});
+
+// test knex connection
+console.log(postgres.select('*').from('users'));
+
 // json parser for 'x-www-form-urlencoded' (postman)
 app.use(express.urlencoded({extended: true}))
 // json parser for 'raw' JSON (postman)

@@ -1,0 +1,11 @@
+
+nav {
+  display: flex;
+  padding: 20px 20px 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+nav p {
+  padding: 0;
+  margin: 0 0 0 40px;
+}

@@ -1,3 +1,7 @@
 .Tilt {
-  background: green;
+  background: none;
+}
+
+.logo {
+  display: inline-block;
 }

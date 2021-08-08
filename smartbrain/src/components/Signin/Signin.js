@@ -25,10 +25,10 @@ class Signin extends React.Component {
       })
     })
     .then(res => res.json())
-    .then(data => {
+    .then(user => {
       // 'success' via devtools Network response for 'signin' route
-      if (data.id) {
-        this.props.loadUser(data)
+      if (user.id) {
+        this.props.loadUser(user)
         this.props.onRouteChange('home')
       }
     })

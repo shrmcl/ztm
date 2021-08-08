@@ -15,12 +15,12 @@ const db = knex({
   },
 })
 
-// knex query builder
-db.select('*')
-  .from('users')
-  .then((data) => {
-    // console.log(data);
-  })
+// // testing knex with their query builder
+// db.select('*')
+//   .from('users')
+//   .then((data) => {
+//     console.log(data);
+//   })
 
 // json parser for 'x-www-form-urlencoded' (postman)
 app.use(express.urlencoded({extended: true}))
@@ -37,42 +37,58 @@ app.get('/', (req, res) => {
 
 // signin
 app.post('/signin', (req, res) => {
-  // // handle password encryption
-  // // Load hash from your password DB.
-  // const hash = '$2a$10$dle.toG5lJJaKazaluM0N.bajfvG7aZqrrtVZotMvn596h/QU1dqy'
-  // bcrypt.compare('apples', hash, function (err, res) {
-  //   // res == true
-  //   console.log('first guess ', res)
-  // })
-  // bcrypt.compare('veggies', hash, function (err, res) {
-  //   // res = false
-  //   console.log('second guess ', res)
-  // })
-  // console.log(req.body)
-  if (
-    req.body.email === database.users[0].email &&
-    req.body.password === database.users[0].password
-  ) {
-    res.json(database.users[0])
-  } else {
-    res.status(400).json('error loggin in')
-  }
+  db.select('email', 'hash').from('login')
+    .where('email', '=', req.body.email)
+    .then(data => {
+      const isValid = bcrypt.compareSync(req.body.password, data[0].hash)
+      console.log('valid? ', isValid)
+      if (isValid) {
+        return db.select('*').from('users')
+        .where('email', '=', req.body.email)
+        .then(user => {
+          console.log('user: ', user)
+          res.json(user[0])
+        })
+        .catch(err => res.status(400).json('unable to get user'))
+      } else {
+        res.status(400).json('wrong credentials')
+      }
+    })
+    .catch(err => res.status(400).json('wrong credentials'))
 })
 
+// register new user
 app.post('/register', (req, res) => {
   const {email, name, password} = req.body
-  // send all registered user details to db
-  db('users')
-    .returning('*')
-    .insert({
-      email: email,
-      name: name,
-      joined: new Date(),
+  // encrtypt the pw
+  const hash = bcrypt.hashSync(password);
+    // set up transaction to only update 'users' if 'login' update succeeds 
+    db.transaction(trx => {
+      // first update login table
+      trx.insert({
+        hash: hash,
+        email: email
+      })
+      .into('login')
+      // only return email to update users 
+      .returning('email')
+      // then update users table
+      .then(loginEmail => {
+        return trx('users')
+          .returning('*')
+          .insert({
+            email: loginEmail[0],
+            name: name,
+            joined: new Date(),
+          })
+          .then(user => {
+            res.json(user[0]);
+          })
+      })
+      .then(trx.commit)
+      .catch(trx.rollback)
     })
-    .then((user) => {
-      res.json(user[0])
-    })
-    .catch((err) => res.status(400).json('unable to register'))
+    .catch(err => res.status(400).json('unable to register'))
 })
 
 // find a logged-in user with their id
@@ -92,18 +108,15 @@ app.get('/profile/:id', (req, res) => {
 })
 
 app.put('/image', (req, res) => {
-  const {id} = req.body
-  let found = false
-  database.users.forEach((user) => {
-    if (user.id === id) {
-      found = true
-      user.entries++
-      return res.json(user.entries)
-    }
+  const {id} = req.body;
+  // increment users' entries on db
+  db('users').where('id', '=', id)
+  .increment('entries', 1)
+  .returning('entries')
+  .then(entries => {
+    res.json(entries[0])
   })
-  if (!found) {
-    res.status(400).json('not found')
-  }
+  .catch(err => res.status(400).json('unable to get entries'))
 })
 
 // listener

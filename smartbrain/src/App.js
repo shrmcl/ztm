@@ -33,18 +33,19 @@ class App extends Component {
   }
 
   calculateFaceLocaction = (data) => {
-    // specify the face detection bounding box parameters via api response
-    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
-    // console.log('data: ', data)
-    const image = document.getElementById('inputimage');
-    const width = Number(image.width);
-    const height = Number(image.height);
-    return {
-      leftCol: clarifaiFace.left_col * width,
-      topRow: clarifaiFace.top_row * height,
-      rightCol: width - (clarifaiFace.right_col * width),
-      bottomRow: height - (clarifaiFace.bottom_row * height)
-    }
+    // specify the face detection bounding box parameters for each face via api response
+    return data.outputs[0].data.regions.map(region => {
+      const clarifaiFace = region.region_info.bounding_box;
+      const image = document.getElementById("inputimage");
+      const width = Number(image.width);
+      const height = Number(image.height);
+      return {
+        leftCol: clarifaiFace.left_col * width,
+        topRow: clarifaiFace.top_row * height,
+        rightCol: width - clarifaiFace.right_col * width,
+        bottomRow: height - clarifaiFace.bottom_row * height
+      };
+    })
   }
 
   loadUser = (data) => {
@@ -58,10 +59,7 @@ class App extends Component {
   }
 
   displayFaceBox = (box) => {
-    console.log('state box ', this.state.box)
-    console.log('box ', box)
     this.setState({box: box})
-    console.log('state box 2 ', this.state.box)
   }
 
   onInputChange = (e) => {
@@ -70,16 +68,7 @@ class App extends Component {
 
   onButtonSubmit = () => {
     this.setState({imageUrl: this.state.input});
-    // this seems to only work with provided sample key: a403429f2ddf4b49b307e318f00e528b
     app.models.predict(
-      // Sometimes the Clarifai Models can be down or not working as they are constantly getting updated.
-      // Check Face Detect Mode: https://www.clarifai.com/models/face-detection
-      // If that isn't working, then that means you will have to wait until their servers are back up. OR
-      // use a different version of their model that works like: `c0c0ac362b03416da06ab3fa36fb58e3`
-      // change from:
-      // .predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
-      // to:
-      // .predict('c0c0ac362b03416da06ab3fa36fb58e3', this.state.input)
       Clarifai.FACE_DETECT_MODEL, // which clarifai model we use
       this.state.input) // url of image being passed to api
     .then(response => {
@@ -97,7 +86,6 @@ class App extends Component {
           this.setState(Object.assign(this.state.user, {entries: count}))
         })
       }
-      // console.log('response on submit: ', response)
       this.displayFaceBox(this.calculateFaceLocaction(response))
     })
     .catch(err => console.log(err))
@@ -114,7 +102,6 @@ class App extends Component {
 
   render() {
     const { isSignedIn, imageUrl, route, box} = this.state;
-    // console.log('state of the box obj: ', this.state.box)
     return (
       <div className="App">
         <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />

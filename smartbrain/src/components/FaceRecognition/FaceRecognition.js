@@ -2,19 +2,34 @@ import React from 'react';
 import './FaceRecognition.css'
 
 const FaceRecognition = ({ imageUrl, box }) => {
+  let allFaces;
+  if (box.length) {
+    allFaces = box.map((el, id) => {
+      return (
+        <div
+          key = {id}
+          className="face-borders"
+          style={{
+            top: el.topRow,
+            right: el.rightCol,
+            bottom: el.bottomRow,
+            left: el.leftCol
+          }}
+        />
+      );
+    })
+  }
+
   return (
    <div className="center ma">
      <div className="absolute mt2">
-      {/* <img src={'https://samples.clarifai.com/face-det.jpg'} alt="" /> */}
-      <img id="inputimage" src={imageUrl} alt="" width="500px" height="auto" />
-      <div 
-        className="bounding-box" 
-        style={{
-          top: box.topRow,
-          right: box.rightCol,
-          bottom: box.bottomRow,
-          left: box.leftCol
-        }}></div>
+      <img id="inputimage" 
+        src={imageUrl} 
+        alt="" 
+        width="500px" 
+        height="auto" 
+      />
+      <div>{ allFaces }</div>
      </div>
    </div>
   )

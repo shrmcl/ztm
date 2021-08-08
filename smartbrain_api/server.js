@@ -3,25 +3,15 @@ const app = express()
 // password encryption
 const bcrypt = require('bcrypt-nodejs')
 const cors = require('cors')
-// SQL querying package:
+// SQL querying module
 const knex = require('knex')
-
 const db = knex({
-  // 'pg' is the installed postgres package
-  client: 'pg',
+  client: 'pg', // 'pg' is the installed postgres module
   connection: {
     host: '127.0.0.1', // same as localhost
     database: 'smartbrain',
   },
 })
-
-// // testing knex with their query builder
-// db.select('*')
-//   .from('users')
-//   .then((data) => {
-//     console.log(data);
-//   })
-
 // json parser for 'x-www-form-urlencoded' (postman)
 app.use(express.urlencoded({extended: true}))
 // json parser for 'raw' JSON (postman)
@@ -30,23 +20,21 @@ app.use(cors())
 // port
 const port = process.env.PORT || 3000
 
-// root route
+// ROOT route
 app.get('/', (req, res) => {
-  res.send(database.users)
+  res.send('hi')
 })
 
-// signin
+// SIGNIN
 app.post('/signin', (req, res) => {
   db.select('email', 'hash').from('login')
     .where('email', '=', req.body.email)
     .then(data => {
       const isValid = bcrypt.compareSync(req.body.password, data[0].hash)
-      console.log('valid? ', isValid)
       if (isValid) {
         return db.select('*').from('users')
         .where('email', '=', req.body.email)
         .then(user => {
-          console.log('user: ', user)
           res.json(user[0])
         })
         .catch(err => res.status(400).json('unable to get user'))
@@ -57,7 +45,7 @@ app.post('/signin', (req, res) => {
     .catch(err => res.status(400).json('wrong credentials'))
 })
 
-// register new user
+// REGISTER 
 app.post('/register', (req, res) => {
   const {email, name, password} = req.body
   // encrtypt the pw
@@ -91,7 +79,7 @@ app.post('/register', (req, res) => {
     .catch(err => res.status(400).json('unable to register'))
 })
 
-// find a logged-in user with their id
+// GET USER with id param
 app.get('/profile/:id', (req, res) => {
   const {id} = req.params
   // find the id in the db
@@ -107,6 +95,7 @@ app.get('/profile/:id', (req, res) => {
     .catch(err => res.status(400).json('error getting user'))
 })
 
+// IMAGE
 app.put('/image', (req, res) => {
   const {id} = req.body;
   // increment users' entries on db
